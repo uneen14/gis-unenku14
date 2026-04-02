@@ -8,148 +8,110 @@ import math
 # ==========================================
 # KONFIGURASI HALAMAN STREAMLIT
 # ==========================================
-st.set_page_config(page_title="GIS UnenKU14", layout="wide")
+# Konfigurasi ini sangat krusial agar aplikasi Android tidak terpotong
+st.set_page_config(
+    page_title="GIS UnenKU14", 
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# CSS Custom untuk memaksimalkan layar HP
+st.markdown("""
+    <style>
+    /* Menghilangkan padding utama Streamlit */
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    /* Memastikan iframe peta penuh */
+    iframe {
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 # --- FUNGSI HITUNG JARAK (HAVERSINE) ---
 def haversine(coord1, coord2):
-    # Radius bumi dalam meter
-    R = 6371000
-    lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
-    lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
-    
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    
-    a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return R * c
+    try:
+        R = 6371000 # Radius bumi dalam meter
+        lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
+        lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
+        dlat, dlon = lat2 - lat1, lon2 - lon1
+        a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+    except:
+        return 0
 
 def calculate_total_length(coords):
-    total_dist = 0
-    for i in range(len(coords) - 1):
-        total_dist += haversine(coords[i], coords[i+1])
-    return total_dist
+    if not coords or len(coords) < 2: return 0
+    return sum(haversine(coords[i], coords[i+1]) for i in range(len(coords) - 1))
 
-# --- SIDEBAR UNTUK INPUT DATA ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("⚙️ Kontrol Data")
-    
-    # 1. Input Nama Jalan
     nama_jalan_input = st.text_input("Masukkan Nama Jalan:", "Jalur Jalan Utama")
-    
-    # 2. Upload File GeoJSON
-    uploaded_file = st.file_uploader("Unggah File GeoJSON (route.geojson)", type=["geojson", "json"])
-    
-    st.info("Gunakan sidebar ini untuk memperbarui data peta secara dinamis.")
+    uploaded_file = st.file_uploader("Unggah GeoJSON", type=["geojson", "json"])
+    st.info("Gunakan sidebar ini untuk mengubah data atau nama jalan secara langsung.")
 
-# Judul Utama Berdasarkan Input
-st.title(f"📍 Nama Jalan : {nama_jalan_input}")
+# Judul di Aplikasi
+st.markdown(f"### 📍 {nama_jalan_input}")
 
-# ==========================================
-# 1. LOGIKA PEMBACAAN DATA
-# ==========================================
+# --- PEMBACAAN DATA ---
 data_json = None
-sumber_data = ""
-
-if uploaded_file is not None:
+if uploaded_file:
     data_json = json.load(uploaded_file)
-    sumber_data = "File Upload"
-    st.sidebar.success("File berhasil diunggah!")
 elif os.path.exists("route.geojson"):
     with open("route.geojson", "r") as f:
         data_json = json.load(f)
-    sumber_data = "route.geojson (Lokal)"
 
-# ==========================================
-# 2. VISUALISASI PETA (Jika data tersedia)
-# ==========================================
+# --- VISUALISASI ---
 if data_json:
     try:
-        # Ekstraksi Koordinat
         raw_coords = data_json["geometry"]["coordinates"]
         path = [[p[1], p[0]] for p in raw_coords]
-        
-        # Hitung Panjang Jalan
         total_panjang = calculate_total_length(path)
         
-        # Penentuan Center Peta
-        start_lat, start_lon = path[0][0], path[0][1]
+        # Buat objek peta dasar
+        m = folium.Map(location=path[0], zoom_start=18, control_scale=True)
         
-        m = folium.Map(location=[start_lat, start_lon], zoom_start=18, tiles='OpenStreetMap')
+        # Visualisasi Jalan (Gaya Modern)
+        folium.PolyLine(path, color='#000000', weight=12, opacity=1).add_to(m)
+        folium.PolyLine(path, color='#FFFFFF', weight=6, opacity=1).add_to(m)
 
-        # --- STYLE JALAN GAYA ATLAS (Ukuran Diperbesar) ---
-        folium.PolyLine(path, color='#000000', weight=14, opacity=1, name="Outline").add_to(m)
-        folium.PolyLine(path, color='#07c1f0', weight=8, opacity=1, name="Isi Jalan").add_to(m)
-
-        # --- FASILITAS RUMAH ---
-        rumah_coords = [[[-7.65365, 108.58760], [-7.65365, 108.58765], [-7.65370, 108.58765], [-7.65370, 108.58760]]]
-        for r in rumah_coords:
-            folium.Polygon(r, color='red', fill=True, fill_color='red', fill_opacity=0.7, weight=1, tooltip="Bangunan Rumah").add_to(m)
-
-        # --- FASILITAS JEMBATAN ---
-        folium.Marker([-7.6568, 108.5867], icon=folium.Icon(color='black', icon='archway', prefix='fa'), tooltip="Jembatan").add_to(m)
-
-        # ==========================================
-        # 3. LEGENDA MINIMALIS (Ditambah Info Panjang Jalan)
-        # ==========================================
+        # Legenda yang dioptimalkan untuk layar Android
         legenda_html = f'''
              <div style="
-             position: fixed; 
-             top: 20px; right: 20px; width: 220px;
-             background-color: white; 
-             border: 2px solid #333; 
-             z-index: 9999; 
-             font-size: 13px;
-             font-family: 'Segoe UI', sans-serif;
-             border-radius: 10px; 
-             padding: 15px;
-             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-             color: #333;
+                 position: fixed; 
+                 bottom: 20px; left: 20px; width: 160px;
+                 background-color: rgba(255, 255, 255, 0.9); 
+                 border: 2px solid #555; 
+                 z-index: 9999; 
+                 font-size: 11px;
+                 border-radius: 10px; 
+                 padding: 10px;
+                 box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+                 font-family: Arial, sans-serif;
              ">
-             <div style="font-weight: bold; margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 8px; text-align: center;">
-                Legenda Peta
+             <b style="font-size: 12px; display: block; margin-bottom: 5px; text-align: center;">INFO PETA</b>
+             <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                <div style="width: 20px; height: 6px; background: white; border: 1px solid black; margin-right: 10px;"></div>
+                <span>Jalan: <b>{total_panjang:.1f} m</b></span>
              </div>
-             
-             <!-- Item Jalan -->
-             <div style="display: flex; flex-direction: column; margin-bottom: 10px;">
-                <div style="display: flex; align-items: center; margin-bottom: 4px;">
-                    <div style="min-width: 30px; display: flex; justify-content: center; margin-right: 12px;">
-                        <div style="width: 25px; height: 10px; background: white; border: 2px solid black;"></div>
-                    </div>
-                    <span style="font-weight: 600;">{nama_jalan_input}</span>
-                </div>
-                <div style="margin-left: 42px; font-size: 11px; color: #666;">
-                    📏 Panjang: <b>{total_panjang:.1f} meter</b>
-                </div>
-             </div>
-             
-             <!-- Item Rumah -->
-             <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <div style="min-width: 30px; display: flex; justify-content: center; margin-right: 12px;">
-                    <div style="width: 16px; height: 16px; background: red; border: 1px solid #b20000; border-radius: 2px;"></div>
-                </div>
-                <span style="font-weight: 600;">Rumah</span>
-             </div>
-             
-             <!-- Item Jembatan -->
              <div style="display: flex; align-items: center;">
-                <div style="min-width: 30px; display: flex; justify-content: center; margin-right: 12px; font-size: 18px;">
-                    🌉
-                </div>
-                <span style="font-weight: 600;">Jembatan</span>
+                <div style="width: 12px; height: 12px; background: red; margin-right: 18px; border-radius: 2px;"></div>
+                <span>Bangunan/Rumah</span>
              </div>
              </div>
              '''
         m.get_root().html.add_child(folium.Element(legenda_html))
 
-        # ==========================================
-        # 4. TAMPILKAN DI STREAMLIT
-        # ==========================================
-        st_folium(m, width=1100, height=600)
-        st.success(f"Berhasil! Data jalan dibaca dari: {sumber_data}")
-
+        # Menampilkan peta dengan lebar otomatis (container width)
+        st_folium(m, use_container_width=True, height=500)
+        
     except Exception as e:
-        st.error(f"Terjadi kesalahan saat memproses data: {e}")
-
+        st.error(f"Gagal memproses data: {e}")
 else:
-    st.warning("Silakan unggah file GeoJSON di sidebar.")
+    st.warning("Menunggu data... Silakan unggah file GeoJSON melalui menu di samping kiri.")
