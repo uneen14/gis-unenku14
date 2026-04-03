@@ -61,7 +61,7 @@ with st.sidebar:
     uploaded_file = st.file_uploader("Unggah GeoJSON Baru", type=["geojson", "json"])
 
 # Tampilkan Judul dengan Class CSS yang sudah dibuat
-st.markdown(f'<h1 class="judul-jalan">📍 {nama_jalan_input}</h1>', unsafe_allow_html=True)
+st.markdown(f'<h3 class="judul-jalan">📍 {nama_jalan_input}</h3>', unsafe_allow_html=True)
 
 # ==========================================
 # 5. PEMROSESAN DATA
