@@ -27,7 +27,7 @@ st.markdown("""
     }
     
     /* Menghilangkan menu bawaan Streamlit agar bersih */
-    #MainMenu {visibility: hidden;}
+    #MainMenu {visibility: transparan;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
