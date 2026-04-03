@@ -75,7 +75,7 @@ total_panjang = 0
 
 with st.sidebar:
     st.header("⚙️ Pengaturan Data")
-    nama_jalan_input = st.text_input("Nama Jalan:", "Jalur Jalan Utama")
+    nama_jalan_input = st.text_input("Nama Jalan:", placeholder="Jalur Jalan Utama")
     uploaded_file = st.file_uploader("Unggah GeoJSON Baru", type=["geojson", "json"])
     
     st.divider()
