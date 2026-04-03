@@ -53,7 +53,7 @@ def haversine(coord1, coord2):
         a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c
-    except: return 0
+    except: return 0
 
 def calculate_total_length(coords):
     if not coords or len(coords) < 2: return 0
