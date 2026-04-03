@@ -91,11 +91,11 @@ with st.sidebar:
             p_jarak = calculate_total_length(p_coords)
             pdf_bytes = create_pdf_report(nama_jalan_input, p_jarak)
             
-            st.download_button(
-                label="📥 Unduh PDF Sekarang",
-                data=pdf_bytes,
-                file_name=f"Laporan_{nama_jalan_input}.pdf",
-                mime="application/pdf"
+        st.download_button(
+            label="📥 Unduh PDF Sekarang",
+            data=pdf_bytes,
+            file_name=f"Laporan_{nama_jalan_input}.pdf",
+            mime="application/pdf"
             )
         else:
             st.error("Data tidak ditemukan.")
