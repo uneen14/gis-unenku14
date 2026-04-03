@@ -2,4 +2,3 @@ streamlit
 folium
 streamlit-folium
 fpdf
-2.  **Cara Penggunaan**: Di sidebar, klik tombol **"Generate PDF Report"**. Setelah diklik, akan muncul tombol baru **"Unduh PDF Sekarang"**. Klik tombol itu untuk menyimpan file PDF-nya ke HP atau komputer Anda.streamlit
