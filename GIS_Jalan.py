@@ -70,15 +70,18 @@ def create_pdf_report(nama, panjang):
 # ==========================================
 # 4. SIDEBAR & INPUT
 # ==========================================
+data_json = None
+total_panjang = 0
+
 with st.sidebar:
     st.header("⚙️ Pengaturan Data")
     nama_jalan_input = st.text_input("Nama Jalan:", "Jalur Jalan Utama")
     uploaded_file = st.file_uploader("Unggah GeoJSON Baru", type=["geojson", "json"])
+    
     st.divider()
-
     st.subheader("📄 Laporan")
+    
     # Tombol Download PDF
-    st.sidebar("📄 Laporan")
     if st.button("Siapkan Laporan PDF"):
         # Muat data sementara untuk PDF
         temp_data = None
@@ -99,7 +102,7 @@ with st.sidebar:
             )
         else:
             st.error("Data tidak ditemukan.")
-
+            
 # Tampilkan Judul dengan Class CSS yang sudah dibuat
 st.markdown(f'<h3 class="judul-jalan">📍 {nama_jalan_input}</h3>', unsafe_allow_html=True)
 
