@@ -94,8 +94,8 @@ if data_json:
             m = folium.Map(location=path[0], zoom_start=18, control_scale=True)
             
             # Gambar Jalur (Hitam Putih agar 'Ngajaran'/Jelas)
-            folium.PolyLine(path, color='#000000', weight=14, opacity=0.8).add_to(m)
-            folium.PolyLine(path, color='#FFFFFF', weight=6, opacity=1).add_to(m)
+            folium.PolyLine(path, color='#fbfcfa', weight=8, opacity=0.8).add_to(m)
+            folium.PolyLine(path, color='#35d7f0', weight=6, opacity=1).add_to(m)
 
             # Floating Info Box (Versi HTML)
             info_html = f'''
@@ -110,7 +110,7 @@ if data_json:
             m.get_root().html.add_child(folium.Element(info_html))
 
             # Tampilkan Peta di Streamlit
-            st_folium(m, use_container_width=True, height=600)
+            st_folium(m, use_container_width=True, height=400)
             
         else:
             st.warning("Format GeoJSON tidak dikenali. Pastikan ada bagian 'geometry' dan 'coordinates'.")
