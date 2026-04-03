@@ -31,6 +31,12 @@ st.markdown("""
         padding-left: 1rem !important;
         padding-right: 1rem !important;
     }
+    /* Tombol sidebar tetap bisa diakses */
+    header[data-testid="stHeader"] {
+        background-color: rgba(255, 255, 255, 0.0);
+        height: 3.5rem;
+        z-index: 999;
+    }
 
     </style>
     """, unsafe_allow_html=True)
