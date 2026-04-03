@@ -63,7 +63,6 @@ def calculate_total_length(coords):
 # 3. FUNGSI PDF (DENGAN DATA TEKNIS)
 # ==========================================
 def create_pdf_report(nama, panjang, coords):
-    if FPDF is None: return None
     try:
         pdf = FPDF()
         pdf.add_page()
@@ -101,9 +100,10 @@ def create_pdf_report(nama, panjang, coords):
         pdf.ln(10)
         pdf.set_font("Arial", "I", 8)
         pdf.cell(200, 10, txt="*Laporan ini dihasilkan secara otomatis oleh GIS UnenKU14", ln=True, align="C")
-
         return pdf.output(dest="S").encode("latin-1")
-    except:
+
+    except Exception as e:
+        print(f"Error creating PDF report: {e}")
         return None
 
 # ==========================================
