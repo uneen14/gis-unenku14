@@ -51,7 +51,22 @@ def haversine(coord1, coord2):
 def calculate_total_length(coords):
     if not coords or len(coords) < 2: return 0
     return sum(haversine(coords[i], coords[i+1]) for i in range(len(coords) - 1))
-
+# ==========================================
+# 4. FUNGSI LAPORAN PDF
+# ==========================================
+def create_pdf_report(nama, panjang):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(200, 10, txt="LAPORAN INFRASTRUKTUR JALAN", ln=True, align="C")
+    pdf.ln(10)
+    pdf.set_font("Arial", "", 12)
+    pdf.cell(200, 10, txt=f"Nama Jalur: {nama}", ln=True)
+    pdf.cell(200, 10, txt=f"Total Panjang: {panjang:.2f} Meter", ln=True)
+    pdf.ln(20)
+    pdf.set_font("Arial", "I", 10)
+    pdf.cell(200, 10, txt="Dicetak melalui Aplikasi GIS UnenKU14", ln=True, align="R")
+    return pdf.output(dest="S").encode("latin-1")
 # ==========================================
 # 4. SIDEBAR & INPUT
 # ==========================================
@@ -59,6 +74,30 @@ with st.sidebar:
     st.header("⚙️ Pengaturan Data")
     nama_jalan_input = st.text_input("Nama Jalan:", "Jalur Jalan Utama")
     uploaded_file = st.file_uploader("Unggah GeoJSON Baru", type=["geojson", "json"])
+ st.divider()
+    st.subheader("📄 Laporan")
+    
+    # Tombol Download PDF
+    if st.button("Siapkan Laporan PDF"):
+        # Muat data sementara untuk PDF
+        temp_data = None
+        if uploaded_file: temp_data = json.load(uploaded_file)
+        elif os.path.exists("route.geojson"):
+            with open("route.geojson", "r") as f: temp_data = json.load(f)
+        
+        if temp_data:
+            p_coords = [[p[1], p[0]] for p in temp_data["geometry"]["coordinates"]]
+            p_jarak = calculate_total_length(p_coords)
+            pdf_bytes = create_pdf_report(nama_jalan_input, p_jarak)
+            
+            st.download_button(
+                label="📥 Unduh PDF Sekarang",
+                data=pdf_bytes,
+                file_name=f"Laporan_{nama_jalan_input}.pdf",
+                mime="application/pdf"
+            )
+        else:
+            st.error("Data tidak ditemukan.")
 
 # Tampilkan Judul dengan Class CSS yang sudah dibuat
 st.markdown(f'<h3 class="judul-jalan">📍 {nama_jalan_input}</h3>', unsafe_allow_html=True)
