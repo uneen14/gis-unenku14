@@ -45,24 +45,68 @@ st.markdown("""
 # 3. RUMUS MATEMATIKA (HAVERSINE)
 # ==========================================
 def haversine(coord1, coord2):
-    """Menghitung jarak presisi antara dua titik koordinat dalam meter"""
-    try:
-        R = 6371000 # Radius bumi dalam meter
-        lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
-        lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
-        
-        dlat = lat2 - lat1
-        dlon = lon2 - lon1
-        
-        a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        return R * c
-    except:
-        return 0
 
+    try:
+        R = 6371000 
+        lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
+        lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
+
+        dlat, dlon = lat2 - lat1, lon2 - lon1
+        a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+    except: return 0
 def calculate_total_length(coords):
-    if not coords or len(coords) < 2: return 0
-    return sum(haversine(coords[i], coords[i+1]) for i in range(len(coords) - 1))
+    if not coords or len(coords) < 2: return 0
+    return sum(haversine(coords[i], coords[i+1]) for i in range(len(coords) - 1))
+
+# ==========================================
+# 3. FUNGSI PDF (DENGAN DATA TEKNIS)
+# ==========================================
+def create_pdf_report(nama, panjang, coords):
+    if FPDF is None: return None
+    try:
+        pdf = FPDF()
+        pdf.add_page()
+
+        # Header
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(200, 10, txt="LAPORAN DATA GEOSPASIAL JALAN", ln=True, align="C")
+        pdf.set_draw_color(53, 215, 240)
+        pdf.line(10, 25, 200, 25)
+        pdf.ln(20)
+
+        # Ringkasan
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(200, 10, txt="RINGKASAN INFRASTRUKTUR:", ln=True)
+        pdf.set_font("Arial", "", 11)
+        pdf.cell(200, 8, txt=f"- Nama Jalur: {nama}", ln=True)
+        pdf.cell(200, 8, txt=f"- Total Panjang: {panjang:.2f} Meter", ln=True)
+        pdf.cell(200, 8, txt=f"- Jumlah Titik Koordinat: {len(coords)} titik", ln=True)
+        pdf.ln(10)
+
+        # Detail Koordinat (Sebagai pengganti gambar jika gambar sulit di-render)
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(200, 10, txt="DETAIL TITIK KOORDINAT (GPS):", ln=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.cell(10, 7, txt="No", border=1)
+        pdf.cell(90, 7, txt="Latitude", border=1)
+        pdf.cell(90, 7, txt="Longitude", border=1, ln=True)
+
+        # Ambil sampel 10 titik pertama agar PDF tidak terlalu panjang
+        for i, (lat, lon) in enumerate(coords[:15]):
+            pdf.cell(10, 6, txt=str(i+1), border=1)
+            pdf.cell(90, 6, txt=str(lat), border=1)
+            pdf.cell(90, 6, txt=str(lon), border=1, ln=True)
+
+        pdf.ln(10)
+        pdf.set_font("Arial", "I", 8)
+        pdf.cell(200, 10, txt="*Laporan ini dihasilkan secara otomatis oleh GIS UnenKU14", ln=True, align="C")
+
+        return pdf.output(dest="S").encode("latin-1")
+    except:
+        return None
+
 # ==========================================
 # 4. FUNGSI LAPORAN PDF
 # ==========================================
