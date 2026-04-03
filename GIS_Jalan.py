@@ -45,8 +45,7 @@ st.markdown("""
 # 3. RUMUS MATEMATIKA (HAVERSINE)
 # ==========================================
 def haversine(coord1, coord2):
-
-    try:
+    try:
         R = 6371000 
         lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
         lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
