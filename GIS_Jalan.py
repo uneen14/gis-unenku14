@@ -6,7 +6,7 @@ import os
 import math
 
 # ==========================================
-# KONFIGURASI HALAMAN STREAMLIT
+# 1. KONFIGURASI HALAMAN (RESPONSIF)
 # ==========================================
 st.set_page_config(
     page_title="GIS UnenKU14", 
@@ -14,22 +14,47 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS untuk memastikan peta memenuhi layar HP dan menghilangkan error UI
+# ==========================================
+# 2. CSS CUSTOM (SOLUSI AGAR TIDAK TERPOTONG)
+# ==========================================
 st.markdown("""
     <style>
-    .block-container { padding: 1rem 0.5rem; }
-    footer {visibility: hidden;}
+    /* Memberikan jarak atas 80px agar tidak tertutup jam/status bar HP */
+    .main .block-container {
+        padding-top: 80px !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    /* Menghilangkan menu bawaan Streamlit agar bersih */
     #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* Styling Judul agar lebih tegas */
+    .judul-jalan {
+        font-weight: bold;
+        color: #1E1E1E;
+        margin-bottom: 10px;
+        border-left: 5px solid #FF4B4B;
+        padding-left: 15px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNGSI HITUNG JARAK ---
+# ==========================================
+# 3. RUMUS MATEMATIKA (HAVERSINE)
+# ==========================================
 def haversine(coord1, coord2):
+    """Menghitung jarak presisi antara dua titik koordinat dalam meter"""
     try:
-        R = 6371000 
+        R = 6371000 # Radius bumi dalam meter
         lat1, lon1 = math.radians(coord1[0]), math.radians(coord1[1])
         lat2, lon2 = math.radians(coord2[0]), math.radians(coord2[1])
-        dlat, dlon = lat2 - lat1, lon2 - lon1
+        
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        
         a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c
@@ -40,17 +65,23 @@ def calculate_total_length(coords):
     if not coords or len(coords) < 2: return 0
     return sum(haversine(coords[i], coords[i+1]) for i in range(len(coords) - 1))
 
-# --- SIDEBAR ---
+# ==========================================
+# 4. SIDEBAR & INPUT
+# ==========================================
 with st.sidebar:
-    st.header("⚙️ Kontrol Data")
+    st.header("⚙️ Pengaturan Data")
     nama_jalan_input = st.text_input("Nama Jalan:", "Jalur Jalan Utama")
-    uploaded_file = st.file_uploader("Unggah GeoJSON", type=["geojson", "json"])
+    uploaded_file = st.file_uploader("Unggah GeoJSON Baru", type=["geojson", "json"])
 
-st.markdown(f"### 📍 {nama_jalan_input}")
+# Tampilkan Judul dengan Class CSS yang sudah dibuat
+st.markdown(f'<h2 class="judul-jalan">📍 {nama_jalan_input}</h2>', unsafe_allow_html=True)
 
-# --- PENANGANAN DATA (ANTISIPASI ERROR 500) ---
+# ==========================================
+# 5. PEMROSESAN DATA
+# ==========================================
 data_json = None
 
+# Cek file unggahan atau file default di server
 try:
     if uploaded_file is not None:
         data_json = json.load(uploaded_file)
@@ -58,38 +89,45 @@ try:
         with open("route.geojson", "r") as f:
             data_json = json.load(f)
 except Exception as e:
-    st.error(f"Terjadi kesalahan saat memuat file data: {e}")
+    st.error(f"Gagal memuat data: {e}")
 
-# --- VISUALISASI ---
+# ==========================================
+# 6. VISUALISASI PETA
+# ==========================================
 if data_json:
     try:
-        # Validasi isi GeoJSON
+        # Cek struktur GeoJSON
         if "geometry" in data_json and "coordinates" in data_json["geometry"]:
             raw_coords = data_json["geometry"]["coordinates"]
-            # Konversi format [lon, lat] ke [lat, lon]
+            # Balik [lon, lat] jadi [lat, lon] untuk Folium
             path = [[p[1], p[0]] for p in raw_coords]
             total_panjang = calculate_total_length(path)
             
-            # Buat Peta
-            m = folium.Map(location=path[0], zoom_start=18)
-            folium.PolyLine(path, color='#000000', weight=12, opacity=1).add_to(m)
+            # Buat Objek Peta (Fokus ke titik pertama)
+            m = folium.Map(location=path[0], zoom_start=18, control_scale=True)
+            
+            # Gambar Jalur (Hitam Putih agar 'Ngajaran'/Jelas)
+            folium.PolyLine(path, color='#000000', weight=14, opacity=0.8).add_to(m)
             folium.PolyLine(path, color='#FFFFFF', weight=6, opacity=1).add_to(m)
 
-            # Legenda Floating
-            legenda_html = f'''
-                 <div style="position: fixed; bottom: 20px; left: 20px; width: 140px; 
-                 background: white; border: 2px solid #333; z-index: 9999; 
-                 font-size: 11px; padding: 8px; border-radius: 8px;">
-                 <b>INFO PETA</b><br>
-                 Panjang: {total_panjang:.1f}m
-                 </div>
-                 '''
-            m.get_root().html.add_child(folium.Element(legenda_html))
+            # Floating Info Box (Versi HTML)
+            info_html = f'''
+                <div style="position: fixed; top: 150px; left: 20px; width: 160px; 
+                background: white; border: 2px solid #000; z-index: 9999; 
+                font-family: sans-serif; font-size: 12px; padding: 10px; border-radius: 10px;
+                box-shadow: 2px 2px 5px rgba(0,0,0,0.2);">
+                <b>DATA INFRASTRUKTUR</b><br>
+                Panjang: <b>{total_panjang:.2f} meter</b>
+                </div>
+            '''
+            m.get_root().html.add_child(folium.Element(info_html))
 
-            st_folium(m, use_container_width=True, height=500)
+            # Tampilkan Peta di Streamlit
+            st_folium(m, use_container_width=True, height=600)
+            
         else:
-            st.warning("Data GeoJSON ditemukan, tapi format koordinat tidak sesuai.")
+            st.warning("Format GeoJSON tidak dikenali. Pastikan ada bagian 'geometry' dan 'coordinates'.")
     except Exception as e:
-        st.error(f"Gagal menampilkan peta: {e}")
+        st.error(f"Kesalahan Visualisasi: {e}")
 else:
-    st.warning("Belum ada data peta. Silakan unggah file route.geojson ke GitHub atau lewat sidebar.")
+    st.info("👋 Selamat Datang! Silakan unggah file 'route.geojson' melalui Sidebar untuk melihat peta.")
