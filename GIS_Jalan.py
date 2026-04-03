@@ -56,8 +56,8 @@ def haversine(coord1, coord2):
     except: return 0
 
 def calculate_total_length(coords):
-    if not coords or len(coords) < 2: return 0
-    return sum(haversine(coords[i], coords[i+1]) for i in range(len(coords) - 1))
+    if not coords or len(coords) < 2: return 0
+    return sum(haversine(coords[i], coords[i+1]) for i in range(len(coords) - 1))
 
 # ==========================================
 # 3. FUNGSI PDF (DENGAN DATA TEKNIS)
