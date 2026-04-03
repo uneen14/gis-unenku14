@@ -7,9 +7,9 @@ import math
 
 # Import FPDF dengan penanganan eror jika library tidak ditemukan
 try:
-    from fpdf import FPDF
+    from fpdf import FPDF
 except ImportError:
-    FPDF = None
+    FPDF = None
 
 # ==========================================
 # 1. KONFIGURASI HALAMAN (RESPONSIF)
