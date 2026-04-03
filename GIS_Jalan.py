@@ -62,49 +62,71 @@ def calculate_total_length(coords):
 # ==========================================
 # 3. FUNGSI PDF (DENGAN DATA TEKNIS)
 # ==========================================
+from fpdf import FPDF
+
 def create_pdf_report(nama, panjang, coords):
-    try:
-        pdf = FPDF()
-        pdf.add_page()
+    try:
+        # Menggunakan format A4 (lebar 210mm). Margin default kiri-kanan adalah 10mm.
+        # Jadi lebar efektif konten adalah 190mm.
+        pdf = FPDF(orientation='P', unit='mm', format='A4')
+        pdf.add_page()
 
-        # Header
-        pdf.set_font("Arial", "B", 16)
-        pdf.cell(200, 10, txt="LAPORAN DATA GEOSPASIAL JALAN", ln=True, align="C")
-        pdf.set_draw_color(53, 215, 240)
-        pdf.line(10, 25, 200, 25)
-        pdf.ln(20)
+        # Header
+        pdf.set_font("Arial", "B", 16)
+        # Gunakan lebar 190 agar pas di tengah halaman
+        pdf.cell(190, 10, txt="LAPORAN DATA GEOSPASIAL JALAN", ln=True, align="C")
+        
+        # Garis bawah Header
+        pdf.set_draw_color(53, 215, 240)
+        pdf.set_line_width(0.5)
+        pdf.line(10, 22, 200, 22) 
+        pdf.ln(15)
 
-        # Ringkasan
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(200, 10, txt="RINGKASAN INFRASTRUKTUR:", ln=True)
-        pdf.set_font("Arial", "", 11)
-        pdf.cell(200, 8, txt=f"- Nama Jalur: {nama}", ln=True)
-        pdf.cell(200, 8, txt=f"- Total Panjang: {panjang:.2f} Meter", ln=True)
-        pdf.cell(200, 8, txt=f"- Jumlah Titik Koordinat: {len(coords)} titik", ln=True)
-        pdf.ln(10)
+        # Ringkasan
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(190, 10, txt="RINGKASAN INFRASTRUKTUR:", ln=True)
+        pdf.set_font("Arial", "", 11)
+        pdf.cell(190, 8, txt=f"- Nama Jalur: {nama}", ln=True)
+        pdf.cell(190, 8, txt=f"- Total Panjang: {panjang:.2f} Meter", ln=True)
+        pdf.cell(190, 8, txt=f"- Jumlah Titik Koordinat: {len(coords)} titik", ln=True)
+        pdf.ln(10)
 
-        # Detail Koordinat (Sebagai pengganti gambar jika gambar sulit di-render)
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(200, 10, txt="DETAIL TITIK KOORDINAT (GPS):", ln=True)
-        pdf.set_font("Arial", "", 9)
-        pdf.cell(10, 7, txt="No", border=1)
-        pdf.cell(90, 7, txt="Latitude", border=1)
-        pdf.cell(90, 7, txt="Longitude", border=1, ln=True)
+        # Detail Koordinat
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(190, 10, txt="DETAIL TITIK KOORDINAT (GPS - Sampel 15 Titik):", ln=True)
+        
+        # Header Tabel
+        pdf.set_font("Arial", "B", 10)
+        pdf.cell(20, 7, txt="No", border=1, align="C")
+        pdf.cell(85, 7, txt="Latitude", border=1, align="C")
+        pdf.cell(85, 7, txt="Longitude", border=1, ln=True, align="C")
 
-        # Ambil sampel 10 titik pertama agar PDF tidak terlalu panjang
-        for i, (lat, lon) in enumerate(coords[:15]):
-            pdf.cell(10, 6, txt=str(i+1), border=1)
-            pdf.cell(90, 6, txt=str(lat), border=1)
-            pdf.cell(90, 6, txt=str(lon), border=1, ln=True)
+        # Isi Tabel
+        pdf.set_font("Arial", "", 9)
+        if coords:
+            # Mengambil 15 titik pertama
+            for i, point in enumerate(coords[:15]):
+                # Pastikan format point adalah [lat, lon] atau (lat, lon)
+                lat = point[0] if len(point) > 0 else "-"
+                lon = point[1] if len(point) > 1 else "-"
+                
+                pdf.cell(20, 6, txt=str(i+1), border=1, align="C")
+                pdf.cell(85, 6, txt=str(lat), border=1, align="C")
+                pdf.cell(85, 6, txt=str(lon), border=1, ln=True, align="C")
+        else:
+            pdf.cell(190, 6, txt="Tidak ada data koordinat tersedia", border=1, ln=True, align="C")
 
-        pdf.ln(10)
-        pdf.set_font("Arial", "I", 8)
-        pdf.cell(200, 10, txt="*Laporan ini dihasilkan secara otomatis oleh GIS UnenKU14", ln=True, align="C")
-        return pdf.output(dest="S").encode("latin-1")
+        pdf.ln(10)
+        pdf.set_font("Arial", "I", 8)
+        pdf.cell(190, 10, txt="*Laporan ini dihasilkan secara otomatis oleh GIS UnenKU14", ln=True, align="C")
 
-    except Exception as e:
-        print(f"Error creating PDF report: {e}")
-        return None
+        # Output sebagai bytes agar bisa diunduh di Streamlit
+        # Jika menggunakan fpdf2, bisa langsung pdf.output()
+        return pdf.output(dest="S").encode("latin-1")
+        
+    except Exception as e:
+        print(f"Error creating PDF report: {e}")
+        return None
 
 # ==========================================
 # 4. FUNGSI LAPORAN PDF
