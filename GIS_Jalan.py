@@ -25,11 +25,6 @@ st.markdown("""
         padding-left: 1rem !important;
         padding-right: 1rem !important;
     }
-    
-    /* Menghilangkan menu bawaan Streamlit agar bersih */
-    #MainMenu {visibility: transparan;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
 
     /* Styling Judul agar lebih tegas */
     .judul-jalan {
