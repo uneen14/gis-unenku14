@@ -26,14 +26,6 @@ st.markdown("""
         padding-right: 1rem !important;
     }
 
-    /* Styling Judul agar lebih tegas */
-    .judul-jalan {
-        font-weight: bold;
-        color: #1E1E1E;
-        margin-bottom: 10px;
-        border-left: 5px solid #FF4B4B;
-        padding-left: 15px;
-    }
     </style>
     """, unsafe_allow_html=True)
 
