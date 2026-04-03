@@ -5,6 +5,12 @@ import json
 import os
 import math
 
+# Import FPDF dengan penanganan eror jika library tidak ditemukan
+try:
+    from fpdf import FPDF
+except ImportError:
+    FPDF = None
+
 # ==========================================
 # 1. KONFIGURASI HALAMAN (RESPONSIF)
 # ==========================================
