@@ -1,4 +1,4 @@
-name: Build D'Zahwa Android APK
+name: Build D'Zahwa Android Release APK
 
 on:
   push:
@@ -9,13 +9,14 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout build branch
         uses: actions/checkout@v4
 
       - name: Prepare project
         run: |
+          rm -rf project
           mkdir -p project
           unzip -q dzahwa-source.zip -d project
           cd project
@@ -31,18 +32,25 @@ jobs:
         working-directory: project
         run: npx expo prebuild --platform android --no-install
 
-      - name: Build APK
+      - name: Build release APK with embedded JS bundle
         working-directory: project/android
+        env:
+          NODE_ENV: production
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Verify release APK
+        run: |
+          test -f project/android/app/build/outputs/apk/release/app-release.apk
+          ls -lh project/android/app/build/outputs/apk/release/app-release.apk
 
       - name: Rename APK
-        run: cp project/android/app/build/outputs/apk/debug/app-debug.apk DZahwa-Collections-v1.3.0.apk
+        run: cp project/android/app/build/outputs/apk/release/app-release.apk DZahwa-Collections-v1.3.1-release.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DZahwa-Collections-v1.3.0-APK
-          path: DZahwa-Collections-v1.3.0.apk
+          name: DZahwa-Collections-v1.3.1-Release-APK
+          path: DZahwa-Collections-v1.3.1-release.apk
           if-no-files-found: error
