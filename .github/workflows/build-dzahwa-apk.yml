@@ -1,0 +1,51 @@
+name: Build D'Zahwa Android APK
+
+on:
+  push:
+    branches:
+      - build/dzahwa-apk-v1.3.0
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout build branch
+        uses: actions/checkout@v4
+
+      - name: Prepare project
+        run: |
+          mkdir -p project
+          unzip -q dzahwa-source.zip -d project
+          cd project
+          npm install --legacy-peer-deps
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Generate Android project
+        working-directory: project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build APK
+        working-directory: project/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp project/android/app/build/outputs/apk/debug/app-debug.apk DZahwa-Collections-v1.3.0.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DZahwa-Collections-v1.3.0-APK
+          path: DZahwa-Collections-v1.3.0.apk
+          if-no-files-found: error
